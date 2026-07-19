@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+  RESELLER
+}
+
+model User {
+  id            Int        @id @default(autoincrement())
+  name          String
+  email         String     @unique
+  password      String
+
+  role          Role       @default(USER)
+
+  cpuLimit      Int        @default(1)
+  ramLimit      Int        @default(1024)
+  diskLimit     Int        @default(10240)
+  websiteLimit  Int        @default(1)
+
+  websites      Website[]
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Website {
+  id            Int        @id @default(autoincrement())
+
+  // Basic
+  name          String
+  domain        String     @unique
+
+  // Runtime
+  runtime       String     @default("Node.js")
+  version       String?
+
+  // Paths
+  rootPath      String
+  nginxConfig   String?
+
+  // Resources
+  cpu           Int        @default(1)
+  ram           Int        @default(1024)
+  disk          Int        @default(10240)
+
+  // Security
+  ssl           Boolean    @default(false)
+  forceHttps    Boolean    @default(false)
+
+  // Status
+  status        String     @default("Stopped")
+
+  // Process
+  pid           Int?
+  port          Int?
+
+  // Statistics
+  cpuUsage      Float      @default(0)
+  ramUsage      Float      @default(0)
+  diskUsage     Float      @default(0)
+
+  // Owner
+  ownerId       Int
+  owner         User       @relation(fields: [ownerId], references: [id])
+
+  // Databases
+  databases     Database[]
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Database {
+  id         Int       @id @default(autoincrement())
+
+  name       String    @unique
+  username   String
+  password   String
+
+  size       String    @default("0 MB")
+
+  websiteId  Int?
+  website    Website?  @relation(fields: [websiteId], references: [id])
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
